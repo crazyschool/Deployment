@@ -22,36 +22,30 @@
 # sudo pishrink.sh !$
 # scp !$ mien.ch:/var/www/mien.ch/static/crazyschool/.
 
-PKGS=()
+PKGS=()  # collecting packages names and installiing them at once speeds up the process
 
 ###
-### Dependencies installation, per activity
+### System infrastructure
 ###
-# System infrastructure
+
 sudo touch /boot/ssh
 sudo apt-get update && sudo apt-get -y upgrade
-PKGS+=(git python3 python3-pip python3-venv)
-#PKGS+=(python-dev python3-dev gcc libtool pkg-config build-essential autoconf automake) # dependency for zmq
+PKGS+=(git python3 python3-pip python3-venv) # python infrastructure
 PKGS+=(vim screen) # nice to have
 
-# Python infrastructure
+# per activity dependencies
+PKGS+=(xserver-xorg xserver-xorg-legacy x11-xserver-utils xinit openbox chromium-browser sed) # activity: qcm
+PKGS+=(mpg123) # activity: bell
 
-###
-### Dependencies installation, per activity
-###
-# qcm
-PKGS+=(xserver-xorg xserver-xorg-legacy x11-xserver-utils xinit openbox chromium-browser sed)  #xdotool unclutter
-# bell
-PKGS+=(mpg123)
-
+# install all packages at once
 sudo apt-get install -y --no-install-recommends ${PKGS[*]}
 sudo apt-get autoremove -y
 #sudo apt-get clean && sudo rm -r /var/lib/apt/lists/* # cleaning
 
-
 ###
 ### Dependencies configuration installation, per activity
 ###
+
 # Activity: QCM
 # install GUI (X and chrome browser)
 # from https://die-antwort.eu/techblog/2017-12-setup-raspberry-pi-for-kiosk-mode/
@@ -66,8 +60,9 @@ sudo sed -i 's/allowed_users=console/allowed_users=anybody/g' /etc/X11/Xwrapper.
 # - raspi memory split ?
 
 ###
-### Dependencies configuration installation, per activity
+### Activity-controller software installation
 ###
+
 # clone git repository, saving the existing in case of failure (eg. invalid credentials)
 BASEDIR="/home/pi/crazyschool/activity-controller"
 NEWDIR=$BASEDIR-latest
@@ -80,8 +75,10 @@ else
     exit 1
 fi
 cd $BASEDIR
+
+# FIXME: using dev branch for now
 echo "Using dev branch"
-git checkout dev # FIXME: using dev branch for now
+git checkout dev
 
 # make venv and install requirements.txt
 echo "Creating python venv"
@@ -90,23 +87,27 @@ python3 -m venv venv
 pip3 install -r requirements.txt
 deactivate
 
-# Configure instance
+##
+## Configuration and system setup
+##
+
 # create crazyschool configuration file on /boot partition
 sudo cp $BASEDIR/environment/service/crazyschool.ini.example /boot/crazyschool.ini
 # TODO: set static IP for first access
 
-# Setup systemd services
-# add systemd service
+# setup systemd services
 echo "Setting up systemd services"
 sudo rm -rf /etc/systemd/system/crazyschool*
 sudo cp $BASEDIR/environment/systemd/services/* /etc/systemd/system/.
 sudo systemctl daemon-reload
+
 # enable crazyschool services manager
 sudo systemctl start crazyschool.service
 sleep 2
 echo "Restarting all services to apply update to running software"
 sudo systemctl restart crazyschool.*
 
+# all good
 echo
 echo "Done."
 
