@@ -103,8 +103,7 @@ sudo cp $BASEDIR/environment/service/crazyschool.ini.example /boot/crazyschool.i
 # add systemd service
 echo "Setting up systemd services"
 sudo rm -rf /etc/systemd/system/crazyschool*
-#sudo ln -s $BASEDIR/environment/service/systemd/* /etc/systemd/system/. # this remove links on systemctl disable
-sudo cp $BASEDIR/environment/service/systemd/* /etc/systemd/system/.
+sudo cp $BASEDIR/environment/systemd/services/* /etc/systemd/system/.
 sudo systemctl daemon-reload
 # enable crazyschool services manager
 sudo systemctl start crazyschool.service
