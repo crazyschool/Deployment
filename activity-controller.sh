@@ -65,32 +65,26 @@ sudo sed -i 's/allowed_users=console/allowed_users=anybody/g' /etc/X11/Xwrapper.
 # - force JACK audio output
 # - raspi memory split ?
 
-# clone git repository
+###
+### Dependencies configuration installation, per activity
+###
+# clone git repository, saving the existing in case of failure (eg. invalid credentials)
 BASEDIR="/home/pi/crazyschool/activity-controller"
-# FIXME: some file belong to root in $BASEDIR, it shouldn't
-#        rm: cannot remove '/home/pi/crazyschool/activity-controller/environment/service/__pycache__/__main__.cpython-37.pyc': Permission denied
-SAVEDIR=$BASEDIR-saved
-if [ -d "$BASEDIR" ]
+NEWDIR=$BASEDIR-latest
+echo "Cloning software into $NEWDIR"
+if git clone https://github.com/crazyschool/activity-controller.git $NEWDIR
 then
-    echo "Saving existing instance at $BASEDIR into $SAVEDIR"
-    cp -r $BASEDIR $SAVEDIR
-fi
-echo "Removing existing instance at $BASEDIR"
-sudo rm -rf $BASEDIR
-echo "Cloning $REPO into $BASEDIR"
-if git clone https://github.com/crazyschool/activity-controller.git $BASEDIR
-then
-    echo "OK, removing saved instance at $SAVEDIR"
-    rm -rf $SAVEDIR
+    sudo rm -rf $BASEDIR  # FIXME: some file belong to root in $BASEDIR, it shouldn't: rm: cannot remove '/home/pi/crazyschool/activity-controller/environment/service/__pycache__/__main__.cpython-37.pyc': Permission denied
+    mv $NEWDIR $BASEDIR
 else
-    echo "Restoring saved instance"
-    rm -rf $BASEDIR
-    mv $SAVEDIR $BASEDIR
     exit 1
 fi
 cd $BASEDIR
+echo "Using dev branch"
 git checkout dev # FIXME: using dev branch for now
+
 # make venv and install requirements.txt
+echo "Creating python venv"
 python3 -m venv venv
 . venv/bin/activate
 pip3 install -r requirements.txt
