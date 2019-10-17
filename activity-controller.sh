@@ -124,6 +124,7 @@ fi
 # setup systemd services
 echo
 echo -e "\033[1m* Setting up systemd services...\e[0m "
+echo "Updating services definitions"
 sudo rm -rf /etc/systemd/system/crazyschool*
 sudo cp $BASEDIR/environment/systemd/services/* /etc/systemd/system/.
 sudo systemctl daemon-reload
@@ -131,12 +132,13 @@ sudo systemctl daemon-reload
 # enable crazyschool services manager
 sudo systemctl start crazyschool.service
 sleep 2
-echo "Restarting all services"
+echo "Restarting services"
 sudo systemctl restart crazyschool.*
 
 # all good
 echo
 echo -e "\033[1m* Done.\e[0m "
+echo "Open http://$(hostname -I | cut -d ' ' -f 1):8000 to access this activity-controller web interface"
 echo
 
 # Write before login message
