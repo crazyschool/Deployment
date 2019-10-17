@@ -56,9 +56,25 @@ sudo apt-get autoremove -y
 BASEDIR="/home/pi/crazyschool/activity-controller"
 # FIXME: some file belong to root in $BASEDIR, it shouldn't
 #        rm: cannot remove '/home/pi/crazyschool/activity-controller/environment/service/__pycache__/__main__.cpython-37.pyc': Permission denied
+SAVEDIR=$BASEDIR-saved
+if [ -d "$BASEDIR" ]
+then
+    echo "Saving existing instance at $BASEDIR into $SAVEDIR"
+    cp -r $BASEDIR $SAVEDIR
+fi
+echo "Removing existing instance at $BASEDIR"
 sudo rm -rf $BASEDIR
-mkdir -p $BASEDIR
-git clone https://github.com/crazyschool/activity-controller.git $BASEDIR
+echo "Cloning $REPO into $BASEDIR"
+if git clone https://github.com/crazyschool/activity-controller.git $BASEDIR
+then
+    echo "OK, removing saved instance at $SAVEDIR"
+    rm -rf $SAVEDIR
+else
+    echo "Restoring saved instance"
+    rm -rf $BASEDIR
+    mv $SAVEDIR $BASEDIR
+    exit 1
+fi
 cd $BASEDIR
 git checkout dev # FIXME: using dev branch for now
 # make venv and install requirements.txt
@@ -70,8 +86,8 @@ deactivate
 # Configure instance
 # create crazyschool configuration file on /boot partition
 sudo cp $BASEDIR/environment/service/crazyschool.ini.example /boot/crazyschool.ini
-# set static IP for first access
-# TODO: make a deployment compose-style configuration, eg:
+# set static IP for first access
+# TODO: make a deployment compose-style configuration, eg:
 # [Room1]
 # ip=192.168.0.200
 # activities=bell frontscreen crm escalade
@@ -81,19 +97,23 @@ sudo cp $BASEDIR/environment/service/crazyschool.ini.example /boot/crazyschool.i
 # activities=bell frontscreen laser
 # ...
 #
-# and then, curl https://rawgithub.com/.../documentation/deployment.ini | ...
+# and then, curl https://rawgithub.com/crazyschool/documentation/deployment.ini...
 
 # Setup systemd services
-# add systemd service
+# add systemd service
+echo "Setting up systemd services"
 sudo rm -rf /etc/systemd/system/crazyschool*
 #sudo ln -s $BASEDIR/environment/service/systemd/* /etc/systemd/system/. # this remove links on systemctl disable
 sudo cp $BASEDIR/environment/service/systemd/* /etc/systemd/system/.
 sudo systemctl daemon-reload
 # enable crazyschool services manager
-sudo systemctl enable crazyschool.*
 sudo systemctl start crazyschool.service
 sleep 2
+echo "Restarting all services to apply update to running software"
 sudo systemctl restart crazyschool.*
+
+echo
+echo "Done."
 
 # Write before login message
 # TODO: add to /etc/issue ?
