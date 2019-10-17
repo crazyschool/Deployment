@@ -22,15 +22,39 @@
 # sudo pishrink.sh !$
 # scp !$ mien.ch:/var/www/mien.ch/static/crazyschool/.
 
+PKGS=()
+
+###
+### Dependencies installation, per activity
+###
 # System infrastructure
 sudo touch /boot/ssh
 sudo apt-get update && sudo apt-get -y upgrade
-sudo apt-get install -y --no-install-recommends vim screen
+PKGS+=(git python3 python3-pip python3-venv)
+#PKGS+=(python-dev python3-dev gcc libtool pkg-config build-essential autoconf automake) # dependency for zmq
+PKGS+=(vim screen) # nice to have
 
+# Python infrastructure
+
+###
+### Dependencies installation, per activity
+###
+# qcm
+PKGS+=(xserver-xorg xserver-xorg-legacy x11-xserver-utils xinit openbox chromium-browser sed)  #xdotool unclutter
+# bell
+PKGS+=(mpg123)
+
+sudo apt-get install -y --no-install-recommends ${PKGS[*]}
+sudo apt-get autoremove -y
+#sudo apt-get clean && sudo rm -r /var/lib/apt/lists/* # cleaning
+
+
+###
+### Dependencies configuration installation, per activity
+###
 # Activity: QCM
 # install GUI (X and chrome browser)
 # from https://die-antwort.eu/techblog/2017-12-setup-raspberry-pi-for-kiosk-mode/
-sudo apt-get install -y --no-install-recommends xserver-xorg xserver-xorg-legacy x11-xserver-utils xinit openbox chromium-browser sed  #xdotool unclutter
 # allow starting x as user: https://gist.github.com/alepez/6273dc5220c1c5ec5f3f126e739d58bf
 #sudo usermod -a -G tty pi # not needed
 sudo cp /etc/X11/Xwrapper.config /etc/X11/Xwrapper.config.orig
@@ -40,17 +64,6 @@ sudo sed -i 's/allowed_users=console/allowed_users=anybody/g' /etc/X11/Xwrapper.
 # - force HDMI video output
 # - force JACK audio output
 # - raspi memory split ?
-
-# Activity: bell
-sudo apt-get install -y --no-install-recommends mpg123
-
-# Install code
-# python infrastructure
-# + dependency for web service and activity daemon (git, pip3 install zmq)
-sudo apt-get install -y --no-install-recommends git python3 python3-pip python3-venv python-dev python3-dev gcc libtool pkg-config build-essential autoconf automake
-
-sudo apt-get autoremove -y
-#sudo apt-get clean && sudo rm -r /var/lib/apt/lists/* # cleaning
 
 # clone git repository
 BASEDIR="/home/pi/crazyschool/activity-controller"
@@ -86,18 +99,7 @@ deactivate
 # Configure instance
 # create crazyschool configuration file on /boot partition
 sudo cp $BASEDIR/environment/service/crazyschool.ini.example /boot/crazyschool.ini
-# set static IP for first access
-# TODO: make a deployment compose-style configuration, eg:
-# [Room1]
-# ip=192.168.0.200
-# activities=bell frontscreen crm escalade
-# slave_frontscreen=192.168.0.201
-# [Room2]
-# ip=192.168.0.200
-# activities=bell frontscreen laser
-# ...
-#
-# and then, curl https://rawgithub.com/crazyschool/documentation/deployment.ini...
+# TODO: set static IP for first access
 
 # Setup systemd services
 # add systemd service
