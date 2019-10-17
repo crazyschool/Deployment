@@ -106,15 +106,19 @@ sudo sed -i 's/allowed_users=console/allowed_users=anybody/g' /etc/X11/Xwrapper.
 # make venv and install requirements.txt
 if [ ! -d "$BASEDIR/venv" ]
 then
-    echo "Creating python venv"
+    echo "Creating python venv at $BASEDIR/venv"
     python3 -m venv $BASEDIR/venv
 fi
 echo "Updating python venv"
-. $BASEDIR/venv/bin/activate pip3 install -r requirements.txt
+. $BASEDIR/venv/bin/activate && pip3 install -r requirements.txt
 deactivate
 
 # create crazyschool configuration file on /boot partition
-sudo cp $BASEDIR/environment/service/crazyschool.ini.example /boot/crazyschool.ini
+if [ ! -f "/boot/crazyschool.ini" ]
+then
+    echo "Creating default /boot/crazyschool.ini"
+    sudo cp $BASEDIR/environment/systemd/crazyschool.ini.example /boot/crazyschool.ini
+fi
 # TODO: set static IP for first access
 
 # setup systemd services
