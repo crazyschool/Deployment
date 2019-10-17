@@ -27,12 +27,11 @@
 ### Script configuration
 ###
 BASEDIR="/home/pi/crazyschool/activity-controller"
-PKGS=()  # collecting packages names and installiing them at once speeds up the process
 
 echo
 echo -e "\033[1m\e[35m* Crazyschool activity-controller software installer for Raspberry Pi !\e[0m"
 echo
-
+PKGS=()  # collecting packages names and installiing them at once speeds up the process
 
 ###
 ### Bootstrap: installing core software first, to prompt immediately for github credentials
@@ -47,6 +46,7 @@ fi
 TMPDIR=$BASEDIR-tmp
 if git clone https://github.com/crazyschool/activity-controller.git $TMPDIR
 then
+    mv $BASEDIR/venv $TMPDIR/venv &> /dev/null # reuse venv if possible
     sudo rm -rf $BASEDIR  # FIXME: some file belong to root in $BASEDIR, it shouldn't: rm: cannot remove '/home/pi/crazyschool/activity-controller/environment/service/__pycache__/__main__.cpython-37.pyc': Permission denied
     mv $TMPDIR $BASEDIR
 else
@@ -104,11 +104,13 @@ sudo sed -i 's/allowed_users=console/allowed_users=anybody/g' /etc/X11/Xwrapper.
 # download activity-controller software: done in Boostrap section above
 
 # make venv and install requirements.txt
-echo "Creating python venv"
-cd $BASEDIR
-python3 -m venv venv
-. venv/bin/activate
-pip3 install -r requirements.txt
+if [ ! -d "$BASEDIR/venv" ]
+then
+    echo "Creating python venv"
+    python3 -m venv $BASEDIR/venv
+fi
+echo "Updating python venv"
+. $BASEDIR/venv/bin/activate pip3 install -r requirements.txt
 deactivate
 
 # create crazyschool configuration file on /boot partition
