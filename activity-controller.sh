@@ -22,15 +22,52 @@
 # sudo pishrink.sh !$
 # scp !$ mien.ch:/var/www/mien.ch/static/crazyschool/.
 
+
+###
+### Script configuration
+###
+BASEDIR="/home/pi/crazyschool/activity-controller"
 PKGS=()  # collecting packages names and installiing them at once speeds up the process
+
+echo
+echo -e "\033[1m\e[35m* Crazyschool activity-controller software installer for Raspberry Pi !\e[0m"
+echo
+
+
+###
+### Bootstrap: installing core software first, to prompt immediately for github credentials
+###
+
+# clone git repository, saving the existing in case of failure (eg. invalid credentials)
+echo -e "\033[1m* Installing software, please enter your github credentials below:\e[0m"
+if ! dpkg -l git > /dev/null
+then
+    sudo apt-get install -y --no-install-recommends git
+fi
+TMPDIR=$BASEDIR-tmp
+if git clone https://github.com/crazyschool/activity-controller.git $TMPDIR
+then
+    sudo rm -rf $BASEDIR  # FIXME: some file belong to root in $BASEDIR, it shouldn't: rm: cannot remove '/home/pi/crazyschool/activity-controller/environment/service/__pycache__/__main__.cpython-37.pyc': Permission denied
+    mv $TMPDIR $BASEDIR
+else
+    rm -rf $TMPDIR
+    exit 1
+fi
+cd $BASEDIR
+# FIXME: using dev branch for now
+echo "Using dev branch"
+git checkout dev
+
 
 ###
 ### System infrastructure
 ###
+echo
+echo -e "\033[1m* Installing dependencies... \e[0m "
 
 sudo touch /boot/ssh
 sudo apt-get update && sudo apt-get -y upgrade
-PKGS+=(git python3 python3-pip python3-venv) # python infrastructure
+PKGS+=(python3 python3-pip python3-venv) # python infrastructure
 PKGS+=(vim screen) # nice to have
 
 # per activity dependencies
@@ -42,11 +79,12 @@ sudo apt-get install -y --no-install-recommends ${PKGS[*]}
 sudo apt-get autoremove -y
 #sudo apt-get clean && sudo rm -r /var/lib/apt/lists/* # cleaning
 
+
 ###
-### Dependencies configuration installation, per activity
+### Dependencies configuration installation
 ###
 
-# Activity: QCM
+# activity: QCM
 # install GUI (X and chrome browser)
 # from https://die-antwort.eu/techblog/2017-12-setup-raspberry-pi-for-kiosk-mode/
 # allow starting x as user: https://gist.github.com/alepez/6273dc5220c1c5ec5f3f126e739d58bf
@@ -60,43 +98,26 @@ sudo sed -i 's/allowed_users=console/allowed_users=anybody/g' /etc/X11/Xwrapper.
 # - raspi memory split ?
 
 ###
-### Activity-controller software installation
+### Activity-controller software deployment and system setup
 ###
 
-# clone git repository, saving the existing in case of failure (eg. invalid credentials)
-BASEDIR="/home/pi/crazyschool/activity-controller"
-NEWDIR=$BASEDIR-latest
-echo "Cloning software into $NEWDIR"
-if git clone https://github.com/crazyschool/activity-controller.git $NEWDIR
-then
-    sudo rm -rf $BASEDIR  # FIXME: some file belong to root in $BASEDIR, it shouldn't: rm: cannot remove '/home/pi/crazyschool/activity-controller/environment/service/__pycache__/__main__.cpython-37.pyc': Permission denied
-    mv $NEWDIR $BASEDIR
-else
-    exit 1
-fi
-cd $BASEDIR
-
-# FIXME: using dev branch for now
-echo "Using dev branch"
-git checkout dev
+# download activity-controller software: done in Boostrap section above
 
 # make venv and install requirements.txt
 echo "Creating python venv"
+cd $BASEDIR
 python3 -m venv venv
 . venv/bin/activate
 pip3 install -r requirements.txt
 deactivate
-
-##
-## Configuration and system setup
-##
 
 # create crazyschool configuration file on /boot partition
 sudo cp $BASEDIR/environment/service/crazyschool.ini.example /boot/crazyschool.ini
 # TODO: set static IP for first access
 
 # setup systemd services
-echo "Setting up systemd services"
+echo
+echo -e "\033[1m* Setting up systemd services...\e[0m "
 sudo rm -rf /etc/systemd/system/crazyschool*
 sudo cp $BASEDIR/environment/systemd/services/* /etc/systemd/system/.
 sudo systemctl daemon-reload
@@ -104,12 +125,13 @@ sudo systemctl daemon-reload
 # enable crazyschool services manager
 sudo systemctl start crazyschool.service
 sleep 2
-echo "Restarting all services to apply update to running software"
+echo "Restarting all services"
 sudo systemctl restart crazyschool.*
 
 # all good
 echo
-echo "Done."
+echo -e "\033[1m* Done.\e[0m "
+echo
 
 # Write before login message
 # TODO: add to /etc/issue ?
