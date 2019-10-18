@@ -39,10 +39,12 @@ PKGS=()  # collecting packages names and installiing them at once speeds up the 
 
 # clone git repository, saving the existing in case of failure (eg. invalid credentials)
 echo -e "\033[1m* Installing software, please enter your github credentials below:\e[0m"
-if ! dpkg -l git > /dev/null
-then
-    sudo apt-get install -y --no-install-recommends git
-fi
+# FIXME: the test for git installation doesn't work, installing git unconditionally for now
+sudo apt-get install -y --no-install-recommends git
+# if ! dpkg -l git > /dev/null
+# then
+#     sudo apt-get install -y --no-install-recommends git
+# fi
 TMPDIR=$BASEDIR-tmp
 if git clone https://github.com/crazyschool/activity-controller.git $TMPDIR
 then
