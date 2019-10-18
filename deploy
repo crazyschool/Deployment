@@ -139,6 +139,7 @@ sudo systemctl restart crazyschool.*
 echo
 echo -e "\033[1m* Done.\e[0m "
 echo "Open http://$(hostname -I | cut -d ' ' -f 1):8000 to access this activity-controller web interface"
+echo "Edit /boot/crazyschool.ini to customize configuration"
 echo
 
 # Write before login message
