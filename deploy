@@ -117,7 +117,7 @@ deactivate
 if [ ! -f "/boot/crazyschool.ini" ]
 then
     echo "Creating default /boot/crazyschool.ini"
-    sudo cp $BASEDIR/environment/systemd/crazyschool.ini.example /boot/crazyschool.ini
+    sudo cp $BASEDIR/environment/crazyschool.ini.example /boot/crazyschool.ini
 fi
 # TODO: set static IP for first access
 
