@@ -73,6 +73,7 @@ PKGS+=(vim screen) # nice to have
 # per activity dependencies
 PKGS+=(xserver-xorg xserver-xorg-legacy x11-xserver-utils xinit openbox chromium-browser sed) # activity: qcm
 PKGS+=(mpg123) # activity: bell
+PKGS+=(vlc) # activity: videoplay
 
 # install all packages at once
 sudo apt-get install -y --no-install-recommends ${PKGS[*]}
