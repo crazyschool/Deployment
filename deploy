@@ -141,6 +141,8 @@ echo
 echo -e "\033[1m* Done.\e[0m "
 echo "Open http://$(hostname -I | cut -d ' ' -f 1):8000 to access this activity-controller web interface"
 echo "Edit /boot/crazyschool.ini to customize configuration"
+echo "View running services by typing: systemctl list-units crazyschool.*"
+echo "View logs by typing: journalctl -n100 -f -u crazyschool.*"
 echo
 
 # Write before login message
