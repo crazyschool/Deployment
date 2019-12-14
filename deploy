@@ -54,9 +54,9 @@ else
     exit 1
 fi
 cd $BASEDIR
-# FIXME: using dev branch for now
-echo "Using dev branch"
-git checkout dev
+# FIXME: explicit master branch checkout
+# for update on installations that were using branch dev
+git checkout master
 
 
 ###
