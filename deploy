@@ -43,10 +43,14 @@ if ! git --version &> /dev/null
 then
     sudo apt-get install -y --no-install-recommends git
 fi
+
 TMPDIR=$BASEDIR-tmp
 if git clone https://github.com/crazyschool/activity-controller.git $TMPDIR
 then
     mv $BASEDIR/venv $TMPDIR/venv &> /dev/null # reuse venv if possible
+    BACKUP_PREFIX=crazyschool-deploy-backup
+    mv $BASEDIR/environment/activity/playaudio /tmp/$BACKUP_PREFIX-playaudio
+    mv $BASEDIR/environment/activity/playvideo /tmp/$BACKUP_PREFIX-playvideo
     sudo rm -rf $BASEDIR  # FIXME: some file belong to root in $BASEDIR, it shouldn't: rm: cannot remove '/home/pi/crazyschool/activity-controller/environment/service/__pycache__/__main__.cpython-37.pyc': Permission denied
     mv $TMPDIR $BASEDIR
 else
@@ -57,7 +61,8 @@ cd $BASEDIR
 # FIXME: explicit master branch checkout
 # for update on installations that were using branch dev
 git checkout master
-
+cp -r /tmp/$BACKUP_PREFIX-playaudio/* $BASEDIR/environment/activity/playaudio/.
+cp -r /tmp/$BACKUP_PREFIX-playvideo/* $BASEDIR/environment/activity/playvideo/.
 
 ###
 ### System infrastructure
