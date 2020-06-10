@@ -51,6 +51,7 @@ then
     BACKUP_PREFIX=crazyschool-deploy-backup
     mv $BASEDIR/environment/activity/playaudio /tmp/$BACKUP_PREFIX-playaudio
     mv $BASEDIR/environment/activity/playvideo /tmp/$BACKUP_PREFIX-playvideo
+    mv $BASEDIR/environment/activity/vieuxfrancois /tmp/$BACKUP_PREFIX-vieuxfrancois
     sudo rm -rf $BASEDIR  # FIXME: some file belong to root in $BASEDIR, it shouldn't: rm: cannot remove '/home/pi/crazyschool/activity-controller/environment/service/__pycache__/__main__.cpython-37.pyc': Permission denied
     mv $TMPDIR $BASEDIR
 else
@@ -63,6 +64,7 @@ cd $BASEDIR
 git checkout master
 cp -r /tmp/$BACKUP_PREFIX-playaudio/* $BASEDIR/environment/activity/playaudio/.
 cp -r /tmp/$BACKUP_PREFIX-playvideo/* $BASEDIR/environment/activity/playvideo/.
+cp -r /tmp/$BACKUP_PREFIX-vieuxfrancois/* $BASEDIR/environment/activity/vieuxfrancois/.
 
 ###
 ### System infrastructure
