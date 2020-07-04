@@ -36,14 +36,15 @@ PKGS=()  # collecting packages names and installiing them at once speeds up the 
 ###
 ### Bootstrap: installing core software first, to prompt immediately for github credentials
 ###
+sudo apt-get update && sudo apt-get -y upgrade
 
 # clone git repository, saving the existing in case of failure (eg. invalid credentials)
-echo -e "\033[1m* Installing software, please enter your github credentials below:\e[0m"
 if ! git --version &> /dev/null
 then
     sudo apt-get install -y --no-install-recommends git
 fi
 
+echo -e "\033[1m* Installing crazyschool software, please enter your github credentials below:\e[0m"
 TMPDIR=$BASEDIR-tmp
 if git clone https://github.com/crazyschool/activity-controller.git $TMPDIR
 then
@@ -73,7 +74,6 @@ echo
 echo -e "\033[1m* Installing dependencies... \e[0m "
 
 sudo touch /boot/ssh
-sudo apt-get update && sudo apt-get -y upgrade
 PKGS+=(python3 python3-pip python3-venv) # python infrastructure
 PKGS+=(vim screen) # nice to have
 
