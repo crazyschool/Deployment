@@ -5,12 +5,6 @@
 # If you want to prevent fs resize on first raspbian boot,
 # remove "init=/usr/lib/raspi-config/init_resize.sh" from /boot/cmdline.txt
 #
-# Usage, to be run on a fresh raspbian image, run either:
-#
-#     environment/service/install.sh
-#     curl https://raw.githubusercontent.com/crazyschool/activity-controller/abd0d72c3bff4a1c9f0529e46f601440b19e9a51/environment/service/install.sh?token=AAA4HYM4SEJAIFDQZ4IYQ625NZI4Q | sh
-#
-#
 # Then ,creating image from SD card and shrink it:
 #
 # # install pishrink.sh from https://github.com/Drewsif/PiShrink
@@ -18,10 +12,9 @@
 # chmod +x pishrink.sh
 # sudo mv pishrink.sh /usr/local/bin
 # # copy SD to disk
-# sudo dd if=/dev/disk2 | pv | dd of=Downloads/crazyschool-raspberrypi-<date>.img bs=4m
+# sudo dd if=/dev/disk2 | pv | dd bs=4m of=Downloads/crazyschool-raspberrypi-<date>.img
 # sudo pishrink.sh !$
 # scp !$ mien.ch:/var/www/mien.ch/static/crazyschool/.
-
 
 ###
 ### Script configuration
@@ -30,12 +23,21 @@ BASEDIR="/home/pi/crazyschool/activity-controller"
 
 echo
 echo -e "\033[1m\e[35m* Crazyschool activity-controller software installer for Raspberry Pi !\e[0m"
-echo
-PKGS=()  # collecting packages names and installiing them at once speeds up the process
+
+if [ "$1" != "keep-ini" ]
+then
+    echo
+    echo -e "\033[33m* File crazyschool.ini will be replaced with version from repository (to keep existing version, use option: -s keep-ini)\e[0m"
+    REFRESH_INI=1
+else
+    REFRESH_INI=0
+fi
 
 ###
-### Bootstrap: installing core software first, to prompt immediately for github credentials
+### Bootstrap: updating operating system first
 ###
+echo
+echo -e "\033[1m* Updating operating system...\e[0m"
 sudo apt-get update && sudo apt-get -y upgrade
 
 # clone git repository, saving the existing in case of failure (eg. invalid credentials)
@@ -44,18 +46,21 @@ then
     sudo apt-get install -y --no-install-recommends git
 fi
 
+###
+### Installing core software
+###
 echo -e "\033[1m* Installing crazyschool software, please enter your github credentials below:\e[0m"
 TMPDIR=$BASEDIR-tmp
 if git clone https://github.com/crazyschool/activity-controller.git $TMPDIR
 then
     mv $BASEDIR/venv $TMPDIR/venv &> /dev/null # reuse venv if possible
-    BACKUP_PREFIX=crazyschool-deploy-backup
-    mv $BASEDIR/environment/activity/playaudio /tmp/$BACKUP_PREFIX-playaudio
-    mv $BASEDIR/environment/activity/playvideo /tmp/$BACKUP_PREFIX-playvideo
-    mv $BASEDIR/environment/activity/vieuxfrancois /tmp/$BACKUP_PREFIX-vieuxfrancois
+    BACKUP=/tmp/crazyschool-deploy-backup-environment
+    mkdir -p $BACKUP
+    mv $BASEDIR/environment/activity/* $BACKUP/.
     sudo rm -rf $BASEDIR  # FIXME: some file belong to root in $BASEDIR, it shouldn't: rm: cannot remove '/home/pi/crazyschool/activity-controller/environment/service/__pycache__/__main__.cpython-37.pyc': Permission denied
     mv $TMPDIR $BASEDIR
 else
+    echo -e "\091[m* Failed to clone github repository, exiting.\e[0m"
     rm -rf $TMPDIR
     exit 1
 fi
@@ -63,15 +68,15 @@ cd $BASEDIR
 # FIXME: explicit master branch checkout
 # for update on installations that were using branch dev
 git checkout master
-cp -r /tmp/$BACKUP_PREFIX-playaudio/* $BASEDIR/environment/activity/playaudio/.
-cp -r /tmp/$BACKUP_PREFIX-playvideo/* $BASEDIR/environment/activity/playvideo/.
-cp -r /tmp/$BACKUP_PREFIX-vieuxfrancois/* $BASEDIR/environment/activity/vieuxfrancois/.
+cp -r $BACKUP/* $BASEDIR/environment/activity/.
+rm -rf $BACKUP
 
 ###
 ### System infrastructure
 ###
 echo
 echo -e "\033[1m* Installing dependencies... \e[0m "
+PKGS=()  # collecting packages names and installiing them at once speeds up the process
 
 sudo touch /boot/ssh
 PKGS+=(python3 python3-pip python3-venv) # python infrastructure
@@ -122,26 +127,34 @@ echo "Updating python venv"
 deactivate
 
 # create crazyschool configuration file on /boot partition
-if [ ! -f "/boot/crazyschool.ini" ]
+if [[ ! -f "/boot/crazyschool.ini" || $REFRESH_INI == 1 ]]
 then
     echo "Creating default /boot/crazyschool.ini"
     sudo cp $BASEDIR/environment/crazyschool.ini.example /boot/crazyschool.ini
 fi
 # TODO: set static IP for first access
 
-# setup systemd services
+TIMEZONE="Europe/Paris"
 echo
+echo -e "\033[1m* Setting timezone to $TIMEZONE\e[0m "
+sudo timedatectl set-timezone $TIMEZONE
+
+# setup systemd services
 echo -e "\033[1m* Setting up systemd services...\e[0m "
 echo "Updating services definitions"
 sudo rm -rf /etc/systemd/system/crazyschool*
 sudo cp $BASEDIR/environment/systemd/services/* /etc/systemd/system/.
 sudo systemctl daemon-reload
 
+echo "Ensuring services logs are persistent"
+sudo sed -i 's/#Storage.*/Storage=persistent/' /etc/systemd/journald.conf
+
 # enable crazyschool services manager
+echo "Running crazyschool.service to enable services defined in crazyschool.ini"
 sudo systemctl start crazyschool.service
 sleep 2
 echo "Restarting services"
-sudo systemctl restart crazyschool.*
+sudo systemctl restart crazyschool.* systemd-journald.service
 
 # all good
 echo
