@@ -146,8 +146,11 @@ sudo rm -rf /etc/systemd/system/crazyschool*
 sudo cp $BASEDIR/environment/systemd/services/* /etc/systemd/system/.
 sudo systemctl daemon-reload
 
-echo "Ensuring services logs are persistent"
-sudo sed -i 's/#Storage.*/Storage=persistent/' /etc/systemd/journald.conf
+echo "Configuring journalctl for logs persistence and file size limit"
+sudo mkdir -p /etc/systemd/journald.conf.d
+sudo su -c 'echo "[Journal]
+Storage=persistent
+SystemMaxFileSize=500M" > /etc/systemd/journald.conf.d/crazyschool.conf'
 
 # enable crazyschool services manager
 echo "Running crazyschool.service to enable services defined in crazyschool.ini"
