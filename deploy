@@ -51,7 +51,7 @@ fi
 ###
 echo -e "\033[1m* Installing crazyschool software, please enter your github credentials below:\e[0m"
 TMPDIR=$BASEDIR-tmp
-if git clone https://github.com/crazyschool/activity-controller.git $TMPDIR
+if git clone git@github.com:crazyschool/activity-controller.git $TMPDIR
 then
     mv $BASEDIR/venv $TMPDIR/venv &> /dev/null # reuse venv if possible
     BACKUP=/tmp/crazyschool-deploy-backup-environment
