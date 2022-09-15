@@ -68,8 +68,15 @@ cd $BASEDIR
 # FIXME: explicit master branch checkout
 # for update on installations that were using branch dev
 git checkout master
+# UPGRADE TO 0.0.50: overwrite chrome script
+mkdir -p /tmp/crazyschool-environment-activity-backup
+cp -r $BASEDIR/environment/activity/. /tmp/crazyschool-environment-activity-backup/.
+#
 cp -r $BACKUP/* $BASEDIR/environment/activity/.
 rm -rf $BACKUP
+
+# UPGRADE TO 0.0.50
+cp /tmp/crazyschool-environment-activity-backup/qcm/chrome $BASEDIR/environment/activity/qcm/chrome
 
 ###
 ### System infrastructure
