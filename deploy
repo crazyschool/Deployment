@@ -86,7 +86,7 @@ echo -e "\033[1m* Installing dependencies... \e[0m "
 PKGS=()  # collecting packages names and installiing them at once speeds up the process
 
 sudo touch /boot/ssh
-PKGS+=(python3 python3-pip python3-venv python-dev gcc) # python infrastructure
+PKGS+=(python3 python3-pip python3-venv python3-dev gcc) # python infrastructure
 PKGS+=(vim screen) # nice to have
 
 # per activity dependencies
