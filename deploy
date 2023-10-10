@@ -24,13 +24,15 @@ BASEDIR="/home/pi/crazyschool/activity-controller"
 echo
 echo -e "\033[1m\e[35m* Crazyschool activity-controller software installer for Raspberry Pi !\e[0m"
 
-if [ "$1" != "keep-ini" ]
+if [ "$1" == "replace-ini" ]
 then
     echo
-    echo -e "\033[33m* File crazyschool.ini will be replaced with version from repository (to keep existing version, use option: -s keep-ini)\e[0m"
-    REFRESH_INI=1
+    echo -e "\033[33m* File crazyschool.ini will be replaced with version from repository (option: -s replace-ini)\e[0m"
+    REPLACE_INI=1
 else
-    REFRESH_INI=0
+    echo
+    echo -e "\033[33m* File crazyschool.ini be kept to its local version (to replace with version from repository, use option: -s replace-ini)\e[0m"
+    REPLACE_INI=0
 fi
 
 ###
@@ -134,7 +136,7 @@ echo "Updating python venv"
 deactivate
 
 # create crazyschool configuration file on /boot partition
-if [[ ! -f "/boot/crazyschool.ini" || $REFRESH_INI == 1 ]]
+if [[ ! -f "/boot/crazyschool.ini" || $REPLACE_INI == 1 ]]
 then
     echo "Creating default /boot/crazyschool.ini"
     sudo cp $BASEDIR/environment/crazyschool.ini.example /boot/crazyschool.ini
