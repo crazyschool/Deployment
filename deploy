@@ -38,9 +38,10 @@ fi
 ###
 ### Bootstrap: updating operating system first
 ###
-echo
-echo -e "\033[1m* Updating operating system...\e[0m"
-sudo apt-get update && sudo apt-get -y upgrade
+# FIXME: on Raspbian 11 Bullseye, the update breaks vlc
+# echo
+# echo -e "\033[1m* Updating operating system...\e[0m"
+# sudo apt-get update && sudo apt-get -y upgrade
 
 # clone git repository, saving the existing in case of failure (eg. invalid credentials)
 if ! git --version &> /dev/null
